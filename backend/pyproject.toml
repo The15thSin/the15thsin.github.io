@@ -1,0 +1,15 @@
+[project]
+name = "portfolio-backend"
+version = "0.1.0"
+description = "This codebase comprises of the python backend that serves the UI for the Portfolio of Ayush Jalan."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.139.0",
+    "httpx>=0.28.1",
+    "python-dotenv>=1.2.2",
+    "uvicorn>=0.51.0",
+]
+
+[tool.uv.sources]
+app = { path = "src" }

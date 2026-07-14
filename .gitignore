@@ -1,2 +1,17 @@
 node_modules
 dist
+
+# Virtual environments
+.venv/
+
+# Python cache files
+__pycache__/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# environment files
+.env
+
+# VS Code settings
+.vscode/
