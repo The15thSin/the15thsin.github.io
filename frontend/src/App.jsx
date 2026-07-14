@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-const DUMMY_ENDPOINT = 'http://localhost:8000/chat/stream';
+const BACKEND_ENDPOINT = import.meta.env.VITE_BACKEND_ENDPOINT;
 
 const BANNER = `
 ╭───< Ayush Vibe Codes: V1 >─────────┬─────────────────────────────────────╮
@@ -126,7 +126,7 @@ export default function App() {
 
     try {
       addHistory("", "assistant");
-      const response = await fetch(DUMMY_ENDPOINT, {
+      const response = await fetch(BACKEND_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
