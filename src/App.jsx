@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-const DUMMY_ENDPOINT = '/api/terminal';
+const DUMMY_ENDPOINT = 'http://localhost:8000/chat/stream';
 
 const BANNER = `
 ╭───< Ayush Vibe Codes: V1 >─────────┬─────────────────────────────────────╮
@@ -25,6 +25,8 @@ export default function App() {
     { id: 3, text: 'Claude Code-style assistant is ready!!! Send a command below...', type: 'info' },
     { id: 4, text: ' ', type: 'info' },
   ]);
+
+  const [messages, setMessages] = useState([]);
 
   const [input, setInput] = useState('');
   const [status, setStatus] = useState('Ready');
@@ -67,39 +69,150 @@ export default function App() {
   }, []);
 
   /* Auto-scroll */
-  useLayoutEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'auto' });
-  }, [history.length]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [history]);
 
   const addHistory = (text, type = 'command') => {
     setHistory((h) => [...h, { id: Date.now(), text, type }]);
+  };
+
+  const updateLastHistory = (text) => {
+    setHistory((prev) => {
+      const copy = [...prev];
+      copy[copy.length - 1] = {
+        ...copy[copy.length - 1],
+        text,
+      };
+      return copy;
+    });
   };
 
   const handleSubmit = async () => {
     if (!input.trim()) return;
 
     const command = input.trim();
+
+    // Show command in terminal
     addHistory(
-      { prompt: 'ayush@portfolio:~$', command },
-      'command'
+      {
+        prompt: "ayush@portfolio:~$",
+        command,
+      },
+      "command"
     );
+
     requestAnimationFrame(() => {
-      if (cursorRef.current) cursorRef.current.style.left = '0px';
+      if (cursorRef.current) cursorRef.current.style.left = "0px";
     });
-    setInput('');
-    setStatus('Sending...');
+
+    setInput("");
+    setStatus("Thinking...");
+
+    // Updated conversation
+    const updatedMessages = [
+      ...messages,
+      {
+        role: "user",
+        content: command,
+      },
+    ];
+
+    setMessages(updatedMessages);
+    let assistantReply = "";
+    let thinking = "";
 
     try {
-      await fetch(DUMMY_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command }),
+      addHistory("", "assistant");
+      const response = await fetch(DUMMY_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/x-ndjson",
+        },
+        body: JSON.stringify({
+          messages: updatedMessages,
+          max_tokens: 8192,
+          temperature: 1.0,
+          top_p: 0.95,
+        }),
       });
-      addHistory(`Sent to ${DUMMY_ENDPOINT} (dummy endpoint).`, 'info');
-    } catch {
-      addHistory('Error: Unable to reach backend endpoint.', 'error');
+
+      if (!response.ok) {
+        throw new Error("Backend error");
+      }
+
+      if (!response.body) {
+        throw new Error("No response stream");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep incomplete JSON
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+
+          try {
+            const obj = JSON.parse(line);
+
+            if ("0" in obj) {
+              assistantReply += obj["0"];
+              updateLastHistory(assistantReply);
+            }
+
+            if ("1" in obj) {
+              thinking += obj["1"];
+
+              // Optional:
+              // setThinking(thinking);
+            }
+          } catch (e) {
+            console.error("Invalid NDJSON:", line);
+          }
+        }
+      }
+
+      if (buffer.trim()) {
+        try {
+          const obj = JSON.parse(buffer);
+
+          if ("0" in obj)
+            assistantReply += obj["0"];
+
+          if ("1" in obj)
+            thinking += obj["1"];
+        } catch (err) {
+          console.error("Invalid final NDJSON:", buffer);
+        }
+      }
+
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "assistant",
+          content: assistantReply,
+        },
+      ]);
+
+      // addHistory(assistantReply, "info");
+    } catch (err) {
+      addHistory("Error: Unable to reach backend endpoint.", "error");
     } finally {
-      setStatus('Ready');
+      setStatus("Ready");
     }
   };
 
@@ -114,44 +227,92 @@ export default function App() {
             scrollbar-track-transparent
             hover:scrollbar-thumb-slate-400/70
             scrollbar-thumb-rounded-full">
-          {history.map((e) =>
-            e.type === 'banner' ? (
-              <pre
-                key={e.id}
-                className="text-xl whitespace-pre overflow-x-auto bg-gradient-to-r from-red-300 via-cyan-400 to-red-900 bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(0, 0,255,0.7)]"
-              >
-                {e.text}
-              </pre>
-            ) : e.type === 'command' && typeof e.text === 'object' ? (
-              <div
-                key={e.id}
-                className="whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed"
-              >
-                <span className="text-cyan-400 font-semibold">
-                  {e.text.prompt}
-                </span>{' '}
-                <span className="text-sky-100">
-                  {e.text.command}
-                </span>
-              </div>
-            ) : (
-              <div
-                key={e.id}
-                className={
-                  'whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed ' +
-                  (e.type === 'info'
-                    ? 'text-zinc-400'
-                    : e.type === 'vibe'
-                      ? 'text-cyan-300 drop-shadow-[0_0_18px_rgba(169,240,255,0.25)]'
-                      : e.type === 'error'
-                        ? 'text-red-400'
-                        : 'text-zinc-100')
-                }
-              >
-                {e.text}
-              </div>
-            )
-          )}
+          {history.map((e) => {
+            switch (e.type) {
+              case "banner":
+                return (
+                  <pre
+                    key={e.id}
+                    className="text-xl whitespace-pre overflow-x-auto bg-gradient-to-r from-red-300 via-cyan-400 to-red-900 bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(0,0,255,0.7)]"
+                  >
+                    {e.text}
+                  </pre>
+                );
+
+              case "command":
+                return (
+                  <div
+                    key={e.id}
+                    className="whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed"
+                  >
+                    <span className="text-cyan-400 font-semibold">
+                      {e.text.prompt}
+                    </span>{" "}
+                    <span className="text-sky-100">
+                      {e.text.command}
+                    </span>
+                  </div>
+                );
+
+              case "assistant":
+                return (
+                  <div
+                    key={e.id}
+                    className="
+                      mt-3 mb-2
+                      border-l-2 border-cyan-400/60
+                      pl-4
+                      whitespace-pre-wrap
+                      break-words
+                      leading-relaxed
+                      text-zinc-100
+                    "
+                  >
+                    {e.text}
+                  </div>
+                );
+
+              case "info":
+                return (
+                  <div
+                    key={e.id}
+                    className="whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-zinc-400"
+                  >
+                    {e.text}
+                  </div>
+                );
+
+              case "vibe":
+                return (
+                  <div
+                    key={e.id}
+                    className="whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-cyan-300 drop-shadow-[0_0_18px_rgba(169,240,255,0.25)]"
+                  >
+                    {e.text}
+                  </div>
+                );
+
+              case "error":
+                return (
+                  <div
+                    key={e.id}
+                    className="whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-red-400"
+                  >
+                    {e.text}
+                  </div>
+                );
+
+              default:
+                return (
+                  <div
+                    key={e.id}
+                    className="whitespace-pre-wrap break-words text-[0.95rem] leading-relaxed text-zinc-100"
+                  >
+                    {e.text}
+                  </div>
+                );
+            }
+          })}
           <div ref={endRef} />
         </div>
 
