@@ -29,7 +29,9 @@ export default function App() {
   const [messages, setMessages] = useState([]);
 
   const [input, setInput] = useState('');
-  const [status, setStatus] = useState('Ready');
+  const [status, setStatus] = useState("Connecting to backend...");
+  const [backendReady, setBackendReady] = useState(false);
+  const [thinking, setThinking] = useState("");
 
   const inputRef = useRef(null);
   const cursorRef = useRef(null);
@@ -73,7 +75,7 @@ export default function App() {
     endRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [history]);
+  }, [history, thinking]);
 
   const addHistory = (text, type = 'command') => {
     setHistory((h) => [...h, { id: Date.now(), text, type }]);
@@ -90,8 +92,42 @@ export default function App() {
     });
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkHealth = async () => {
+      try {
+        const res = await fetch(`${BACKEND_ENDPOINT}/health`);
+
+        if (res.ok) {
+          if (!cancelled) {
+            setBackendReady(true);
+            setStatus("Ready");
+          }
+          return;
+        }
+      } catch (_) { }
+
+      if (!cancelled) {
+        setStatus("Connecting to backend...");
+        setTimeout(checkHealth, 2000);
+      }
+    };
+
+    checkHealth();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSubmit = async () => {
     if (!input.trim()) return;
+
+    if (!backendReady) {
+      addHistory("Backend is still starting. Please wait...", "info");
+      return;
+    }
 
     const command = input.trim();
 
@@ -109,7 +145,8 @@ export default function App() {
     });
 
     setInput("");
-    setStatus("Thinking...");
+    setStatus("Ready");
+    setThinking("Thinking...");
 
     // Updated conversation
     const updatedMessages = [
@@ -122,11 +159,12 @@ export default function App() {
 
     setMessages(updatedMessages);
     let assistantReply = "";
-    let thinking = "";
+    let thinkingText = "";
+    let firstAssistantToken = false;
 
     try {
       addHistory("", "assistant");
-      const response = await fetch(BACKEND_ENDPOINT, {
+      const response = await fetch(`${BACKEND_ENDPOINT}/chat/stream`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,16 +207,20 @@ export default function App() {
           try {
             const obj = JSON.parse(line);
 
-            if ("0" in obj) {
-              assistantReply += obj["0"];
-              updateLastHistory(assistantReply);
+            if ("1" in obj && !firstAssistantToken) {
+              thinkingText += obj["1"];
+              setThinking(thinkingText);
             }
 
-            if ("1" in obj) {
-              thinking += obj["1"];
+            if ("0" in obj) {
 
-              // Optional:
-              // setThinking(thinking);
+              if (!firstAssistantToken) {
+                firstAssistantToken = true;
+                setThinking("");
+              }
+
+              assistantReply += obj["0"];
+              updateLastHistory(assistantReply);
             }
           } catch (e) {
             console.error("Invalid NDJSON:", line);
@@ -190,11 +232,21 @@ export default function App() {
         try {
           const obj = JSON.parse(buffer);
 
-          if ("0" in obj)
-            assistantReply += obj["0"];
+          if ("1" in obj && !firstAssistantToken) {
+            thinkingText += obj["1"];
+            setThinking(thinkingText);
+          }
 
-          if ("1" in obj)
-            thinking += obj["1"];
+          if ("0" in obj) {
+
+            if (!firstAssistantToken) {
+              firstAssistantToken = true;
+              setThinking("");
+            }
+
+            assistantReply += obj["0"];
+            updateLastHistory(assistantReply);
+          }
         } catch (err) {
           console.error("Invalid final NDJSON:", buffer);
         }
@@ -212,6 +264,7 @@ export default function App() {
     } catch (err) {
       addHistory("Error: Unable to reach backend endpoint.", "error");
     } finally {
+      setThinking("");
       setStatus("Ready");
     }
   };
@@ -313,6 +366,28 @@ export default function App() {
                 );
             }
           })}
+          {thinking && (
+            <div
+              className="
+                mt-3 mb-2
+                rounded-lg
+                border border-yellow-500/20
+                bg-yellow-500/5
+                px-4 py-3
+                whitespace-pre-wrap
+                break-words
+              "
+            >
+              <div className="flex items-center gap-2 mb-2 text-yellow-400 text-xs uppercase tracking-wider">
+                <span className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
+                Thinking...
+              </div>
+
+              <div className="text-yellow-200/90 italic leading-relaxed">
+                {thinking}
+              </div>
+            </div>
+          )}
           <div ref={endRef} />
         </div>
 
@@ -339,6 +414,7 @@ export default function App() {
                   font-mono
                 "
                 spellCheck={false}
+                disabled={!backendReady}
               />
 
               {/* BLOCK CURSOR */}
