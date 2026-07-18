@@ -33,7 +33,7 @@ export default function TerminalInput({
           border-sky-400/30
           bg-slate-900/95
           px-5
-          py-4
+          py-2
           cursor-text
         "
         onClick={() => inputRef.current?.focus()}
@@ -101,7 +101,26 @@ export default function TerminalInput({
               text-base
             "
           />
+
         </div>
+        <button
+          onClick={onSubmit}
+          disabled={!backendReady || !input.trim().length === 0}
+          className="
+              flex h-10 w-10 items-center justify-center
+              rounded-full
+              border border-cyan-400/40
+              bg-cyan-500
+              text-zinc-900
+              transition-all
+              hover:bg-cyan-400
+              hover:scale-105
+              active:scale-95
+              disabled:opacity-40
+              disabled:cursor-not-allowed
+            ">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 ml-1"><path d="M3.4 20.4 20.8 12 3.4 3.6l2.2 6.7L15 12l-9.4 1.7-2.2 6.7z" /></svg> 
+        </button>
       </div>
     </div>
   );
