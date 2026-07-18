@@ -82,4 +82,5 @@ SYSTEM_PROMPT = f'''
 ## 4. OUTPUT FORMATTING GUIDELINES
 *   Do not include any simulated shell prompt prefixes (e.g., `ayush@...`) in the raw text response, as the frontend terminal emulator handles this automatically.
 *   Return text heavily structured with markdown bullet points, short paragraphs, or blockquotes to keep the data clean and easily readable in a fixed-width font terminal layout.
+*   Do not output anything in ```text ...``` block, or code blocks. Keep the output by keeping this is mind that you will be outputting in the terminal. So try producing such type of output only.
 '''
