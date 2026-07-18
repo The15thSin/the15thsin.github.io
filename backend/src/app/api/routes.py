@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from app.prompts.system_prompt import SYSTEM_PROMPT
 from app.services.nvidia_llm_service import NvidiaLLMService
+from app.utils.logger import log
 
 router = APIRouter()
 
@@ -52,11 +53,13 @@ async def chat(request: ChatRequest) -> ChatResponse:
             # enable_thinking=request.enable_thinking,
         )
     except httpx.HTTPStatusError as exc:
+        log.error(f"HTTP error occurred: {exc.response.status_code} - {exc.response.text}")
         raise HTTPException(
             status_code=exc.response.status_code,
             detail=exc.response.text,
         ) from exc
     except httpx.HTTPError as exc:
+        log.error(f"HTTP error occurred: {str(exc)}")
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     finally:
         await service.close()
@@ -70,8 +73,8 @@ async def stream_chat(request: ChatRequest) -> StreamingResponse:
 
     async def event_stream():
         service = _create_service()
-        output_batcher = TokenBatcher(channel="0")
-        thinking_batcher = TokenBatcher(channel="1")
+        output_batcher = TokenBatcher(channel="0", batch_size=1)
+        thinking_batcher = TokenBatcher(channel="1", batch_size=1)
 
         try:
             async for chunk in service.stream_chat(
@@ -99,10 +102,24 @@ async def stream_chat(request: ChatRequest) -> StreamingResponse:
                 yield line
         except httpx.HTTPStatusError as exc:
             error = {"status_code": exc.response.status_code, "detail": exc.response.text}
+            log.exception(f"HTTP request failed with status code {exc.response.status_code}")
             yield _to_ndjson({"error": error})
         except httpx.HTTPError as exc:
             error = {"status_code": 502, "detail": str(exc)}
+            log.exception(f"HTTP request failed")
             yield _to_ndjson({"error": error})
+        except Exception as e:
+            log.exception(
+                "Unexpected streaming error (%s): %r",
+                type(e).__name__,
+                e,
+            )
+            yield _to_ndjson({
+                "error": {
+                    "status_code": 500,
+                    "detail": "Unexpected server error"
+                }
+            })
         finally:
             await service.close()
 

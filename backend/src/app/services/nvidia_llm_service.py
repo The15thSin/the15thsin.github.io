@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import List, Dict, AsyncGenerator, Optional, Any
 
 import httpx
@@ -31,7 +32,7 @@ class NvidiaLLMService:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        timeout: float = 60.0,
+        timeout: float = 300.0,
     ):
         self.api_key = api_key or os.getenv("NVIDIA_API_KEY")
         if not self.api_key:
@@ -43,6 +44,7 @@ class NvidiaLLMService:
         }
 
         self.client = httpx.AsyncClient(
+            http2=True,
             timeout=timeout,
             headers=self.headers,
         )
@@ -59,7 +61,7 @@ class NvidiaLLMService:
         temperature: float = 1.0,
         top_p: float = 0.95,
         stream: bool = False,
-        enable_thinking: bool = True,
+        enable_thinking: bool = False,
     ) -> Dict[str, Any]:
         return {
             "model": self.MODEL,
@@ -100,15 +102,28 @@ class NvidiaLLMService:
     ) -> AsyncGenerator[str, None]:
         payload = self._build_payload(messages, stream=True, **kwargs)
 
+        start = time.perf_counter()
+
+        print("Sending request...")
+
         async with self.client.stream(
             "POST",
             self.BASE_URL,
             json=payload,
             headers={"Accept": "text/event-stream"},
         ) as response:
+            print(f"Response headers: {time.perf_counter() - start:.3f}s")
+            print(f"HTTP Version: {response.http_version}")
+
             response.raise_for_status()
 
+            first = True
+
             async for line in response.aiter_lines():
+                if first:
+                    print(f"First SSE line: {time.perf_counter() - start:.3f}s")
+                    first = False
+
                 if not line:
                     continue
 
