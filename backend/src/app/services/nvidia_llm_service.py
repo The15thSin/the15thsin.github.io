@@ -61,7 +61,7 @@ class NvidiaLLMService:
         temperature: float = 1.0,
         top_p: float = 0.95,
         stream: bool = False,
-        enable_thinking: bool = False,
+        enable_thinking: bool = True,
     ) -> Dict[str, Any]:
         return {
             "model": self.MODEL,
