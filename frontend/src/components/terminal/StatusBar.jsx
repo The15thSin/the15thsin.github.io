@@ -5,7 +5,7 @@ export default function StatusBar({ status }) {
   const isConnecting = lower.includes("connecting");
 
   return (
-    <div className="fixed bottom-2 left-3 right-3 sm:left-6 sm:right-6">
+    <div className="shrink-0 px-1 pb-1 sm:px-0 sm:pb-0">
       <div className="flex flex-col gap-1 px-2 text-[8px] text-zinc-400 sm:flex-row sm:items-center sm:text-xs">
         {/* Help Text */}
         <div className="flex flex-wrap gap-x-3 gap-y-1">

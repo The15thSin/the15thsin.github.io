@@ -2,7 +2,7 @@ import SoftAurora from "../../components/layout/SoftAurora";
 
 export default function MainLayout({ children }) {
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-black text-zinc-100 font-mono">
+    <div className="relative h-screen h-[100dvh] w-screen overflow-hidden bg-black text-zinc-100 font-mono">
 
       {/* Base background */}
       <div
@@ -32,7 +32,7 @@ export default function MainLayout({ children }) {
       </div>
 
       {/* Your content */}
-      <div className="relative flex h-full flex-col px-2 pb-2 sm:px-8 sm:pb-24 z-10">
+      <div className="relative z-10 flex h-full min-h-0 flex-col px-2 pb-2 sm:px-8 sm:pb-8">
         {children}
       </div>
 

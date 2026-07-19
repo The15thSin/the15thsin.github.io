@@ -8,4 +8,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   logLevel: 'warn',
+  server: {
+    allowedHosts: ['.localhost', 'fishing-took-testing-ladder.trycloudflare.com'],
+  },
 })

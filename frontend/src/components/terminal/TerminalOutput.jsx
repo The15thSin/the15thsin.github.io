@@ -10,11 +10,10 @@ export default function TerminalOutput({
   return (
     <div
       className="
+        min-h-0
         flex-1
         overflow-y-auto
         p-4
-        mb-24
-        sm:mb-0
         scrollbar-thin
         scrollbar-thumb-slate-500/40
         scrollbar-track-transparent

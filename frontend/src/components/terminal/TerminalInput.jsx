@@ -23,7 +23,7 @@ export default function TerminalInput({
   );
 
   return (
-    <div className="fixed bottom-12 left-4 right-4 sm:bottom-8 sm:left-6 sm:right-6">
+    <div className="shrink-0 px-2 sm:px-0">
       <div
         className="
           relative
