@@ -4,7 +4,8 @@ export default function Banner({ text }) {
       className="
         overflow-x-auto
         whitespace-pre
-        text-xl
+        text-[10px]
+        sm:text-xl
         bg-gradient-to-r
         from-red-300
         via-cyan-400

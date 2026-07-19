@@ -28,7 +28,9 @@ export default function useTerminalCursor(input) {
 
       const rect = mirrorEl.getBoundingClientRect();
 
-      cursorEl.style.left = `${rect.width}px`;
+      const left = rect.width - inputEl.scrollLeft;
+
+      cursorEl.style.left = `${Math.max(0, left)}px`;
     };
 
     const inputElement = inputRef.current;

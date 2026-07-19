@@ -1,6 +1,5 @@
 import TerminalOutput from "./TerminalOutput";
 import TerminalInput from "./TerminalInput";
-import StatusBar from "./StatusBar";
 
 export default function Terminal({
   history,
@@ -36,9 +35,9 @@ export default function Terminal({
         cursorRef={cursorRef}
         mirrorRef={mirrorRef}
         backendReady={backendReady}
+        status={status}
       />
 
-      <StatusBar status={status} />
     </>
   );
 }

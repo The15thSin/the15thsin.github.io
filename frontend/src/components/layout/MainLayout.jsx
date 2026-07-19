@@ -8,7 +8,7 @@ export default function MainLayout({ children }) {
       <div
         className="
           absolute inset-0
-          bg-[radial-gradient(circle_at_top_left,rgba(56,110,255,0.08),transparent_22%),linear-gradient(180deg,#0a0a0a_0%,#040404_100%)]
+          bg-[radial-gradient(circle_at_top_left,rgba(56,110,255,0.08),transparent_12%),linear-gradient(180deg,#0a0a0a_0%,#040404_100%)]
         "
       />
 
@@ -32,7 +32,7 @@ export default function MainLayout({ children }) {
       </div>
 
       {/* Your content */}
-      <div className="relative flex h-full flex-col px-8 pb-24 z-10">
+      <div className="relative flex h-full flex-col px-2 pb-2 sm:px-8 sm:pb-24 z-10">
         {children}
       </div>
 

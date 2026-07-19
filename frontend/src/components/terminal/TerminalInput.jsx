@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import StatusBar from "./StatusBar";
 
 export default function TerminalInput({
   input,
@@ -10,6 +11,7 @@ export default function TerminalInput({
   mirrorRef,
 
   backendReady,
+  status,
 }) {
   const handleKeyDown = useCallback(
     (e) => {
@@ -21,7 +23,7 @@ export default function TerminalInput({
   );
 
   return (
-    <div className="fixed bottom-8 left-6 right-6">
+    <div className="fixed bottom-12 left-4 right-4 sm:bottom-8 sm:left-6 sm:right-6">
       <div
         className="
           relative
@@ -32,8 +34,10 @@ export default function TerminalInput({
           border
           border-sky-400/30
           bg-slate-900/95
-          px-5
-          py-2
+          px-3
+          py-1
+          sm:py-2
+          sm:px-5
           cursor-text
         "
         onClick={() => inputRef.current?.focus()}
@@ -122,6 +126,7 @@ export default function TerminalInput({
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 ml-1"><path d="M3.4 20.4 20.8 12 3.4 3.6l2.2 6.7L15 12l-9.4 1.7-2.2 6.7z" /></svg> 
         </button>
       </div>
+      <StatusBar status={status} />
     </div>
   );
 }

@@ -10,5 +10,4 @@ export const BANNER = `
 │         Software Engineer          │ Still under construction...         |
 │      ~/ayushjalan/portfolio        │ Why? Because credits ran out... ;)  |
 ╰────────────────────────────────────┴─────────────────────────────────────╯
-
 `;

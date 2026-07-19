@@ -15,7 +15,9 @@ export default function HistoryItem({ item, scrollToBottom }) {
           className="
             whitespace-pre-wrap
             break-words
-            text-[0.95rem]
+            mt-2
+            text-[0.9rem]
+            sm:text-[1.2rem]
             leading-relaxed
           "
         >
@@ -32,6 +34,8 @@ export default function HistoryItem({ item, scrollToBottom }) {
       return (
         <div
           className="
+            sm:text-[1rem]
+            text-xs
             mt-3
             mb-2
             border-l-2
@@ -41,6 +45,7 @@ export default function HistoryItem({ item, scrollToBottom }) {
             break-words
             leading-relaxed
             text-zinc-100
+            sm:mb-0
           "
         >
           <AnimatedText text={item.text} onUpdate={scrollToBottom} />
